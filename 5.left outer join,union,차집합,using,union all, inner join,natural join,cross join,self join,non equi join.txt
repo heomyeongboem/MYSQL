@@ -1,0 +1,156 @@
+#---참조---
+stock table(자식,foreign key) -참조-> item table(부모,primary key)
+
+#---left outer join, right outer join, inner join : 두 테이블을 합침 
+#left outer join -> 왼쪽 기준
+#right outer join -> 오른쪽 기준
+#inner join -> 교집합 
+#on a.id = b.item_id : 값이 같은 컬럼을 기준으로 합치겠다.
+select i.id,i.name,s.item_id,s.inventory_count
+from item as i right outer join stock as s 
+on i.id = s.item_id;
+
+#foreign key란 한쪽은 무조껀 다른 한쪽이 가지고 있는 값을 포함해야된다.
+-->A가 B에 포함되는 관계
+inner join은 포함관계가 아니여도 성립 
+
+#---실습
+pizza_price_cost, sales  두 테이블을 조인해서, 각 피자별 판매량을 한꺼번에 보려고 합니다.
+조인을 통해 생성된 결과 중에서 pizza_price_cost 테이블의 name 컬럼과, sales 테이블의 sales_volume 컬럼만 조회하세요.
+이때 sales_volume 컬럼에는 '판매량'이라는 alias를 붙이고, sales_volume이 NULL인 row의 경우에는 ‘판매량 정보 없음’으로 표시하세요.
+
+select p.name, colaesce (s.sales_volume, '판매량 정보 없음') as '판매량'
+from pizza_price_cost as p left outer join sales as s
+on p.id = s.menu_id;
+
+#---결합 연산: left outer join , right outer join , inner join
+#---집합 연산: 합집합, 차집합, 교집합 (필요조건) 두 컬럼이름이 동일
+#A교집합B
+select * from A
+intersect 
+select * from B;
+
+#A-B
+select * form A
+intersect
+select * from B;
+
+#A합집합B
+select * from A
+union
+select * from B
+
+#---left outer join과 right outer join을 이용한 차집합
+#item 테이블에는 o item_new 테이블에는 x --> 사라진 제품 찾기 
+select old.id,old.name,new.id,new.name
+from item as old left outer join item_new as new
+on old.id = new.id
+where new.id is null;
+
+#item 테이블에는 x item_new 테이블에는 o --> 신제품 찾기 
+select old.id,old.name,new.id,new.name
+from item as old right outer join item_new as new
+on old.id = new.id
+where old.id is null;
+
+#---using---
+on과 동일 하게 쓰임 단 컬럼 이름이 같아야함
+on old.id = new.id 
+using(id)
+
+#---union,union all ---
+union은 합집합으로 교집합이 한번 나오지만 
+union all 은 합집합에 교집합이 두번 나온다고 보면 된다.
+
+#---의미있는 데이터 찾기 ---
+-->각 상품별로 여성 회원이 남긴 별점의 평균 값 찾기
+select 
+i.id, i.name,avg(star)
+from item as i left outer join review as r on i.id = r.item_id
+left outer join member as m on r.mem_id = m.id
+where m.gender = 'f'
+group by i.id, i.name
+order by avg(star) desc, i.name desc;
+--> 위 조건에서 리뷰 2개 이상
+select i.id,i.name,avg(star),count(*)
+from item as i left outer join review as r on i.id = r.item_id
+left outer join member as m on r.mem_id = m.id 
+where m.gender = 'f'
+group by i.id,i.name
+having count(*) > 1 
+order by avg(star) desc, count(*)
+
+#---실습문제
+(1) 일단 세 테이블을 이너 조인(INNER JOIN)하세요.
+
+*조인 기준은 다음과 같이 하면 됩니다
+
+review 테이블의 item_id 컬럼 - item 테이블의 id 컬럼
+review 테이블의 mem_id 컬럼 - member 테이블의 id 컬럼
+(2) 그리고 item 테이블의 gender 컬럼의 값이 u인 row들만 선별하세요.
+(3) item 테이블의 registration_date 컬럼에서 연도를 추출해서 이것(상품 등록 연도)을 기준으로 row들을 그루핑하세요.
+(4) 각 그룹 내 row 개수가 10개 이상인 그룹들만 추리세요.
+(5) 결과를 별점 평균값을 기준으로 내림차순 정렬하세요.
+(6) 컬럼은 총 세 개를 조회하세요.
+
+상품 등록 연도 컬럼('등록 연도'라는 alias를 붙이세요.)
+각 그룹 내 row의 개수('리뷰 개수'라는 alias를 붙이세요.)
+각 그룹별 별점 평균값('별점 평균값'이라는 alias를 붙이세요.)
+
+select year(i.registration_date) as '등록 연도' ,
+count(*) as '리뷰 개수' ,
+avg(r.star) as '별점 평균값'
+from review as r inner join item as i on r.item_id = i.id
+inner join member as m on r.mem_id = m.id 
+where i.gender = 'u'
+group by year(i.registration_date)
+having count(*) >= 10
+order by avg(r.star) desc;
+
+#---natural join: 두 테이블안에 같은 컬럼이 있다면 그 컬럼을 기준으로 알아서 inner join 해줌
+select p.id, p.player_name, p.team_name,t.team_name,t.region
+from player as p natural join team as t 
+
+#cross join: 두 테이블의 row들의 모든 조합이 표시
+--> 옷을 입을때 상-하의 조합들을 한눈에 보고 싶을때
+select * from member cross join stock;
+
+#---self join:하나의 테이블 안에서 다양한 정보들을 추출
+--> 같은 나이의 사람들을 그루핑해서 조회 --> 오른쪽 컬럼에 나옴 
+select *
+from member as m1 left outer join member as m2 
+on m1.age = m2.age;
+
+-->직속상사를 보여줌
+select * from 
+from employee as e1 left outer join employee as e2 on e1.boss = e2.id 
+
+-->직속상사의 직속상사를 보여줌 
+select * from 
+from employee as e1 left outer join employee as e2 on e1.boss = e2.id 
+left outer join employee as e3 on e2.boss = e3.id 
+
+#---full outer join : left outer join과 right outer join 합쳐놓은거 
+select * from player as p left outer join team as t on p.team_name = t.team_name
+union (or union all )
+select * from player as p right outer join team as t on p.team_name = t.team_name
+
+#---non equi join: 조인 조건이 '=' 가 아닌 조인 
+#회원의 가입일 < 상품의 등록된 날짜 조회
+select m.email,m.sign_up_day,i.name,i.registration_date
+from member as m left outer join item as i 
+on m.sign_up_day < i.registration_date
+order by m.sign_up_day asc;
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,101 @@
+#---서브 쿼리: sql 문안에 '부품'처럼 들어가는 select 문 
+#--having 안에 서브 쿼리 
+--> 리뷰 테이블에 있는 총 평점의 평균값 보다 작은 상품 찾기
+
+select i.id ,i.name, avg(star) as avg_star 
+from item as i left outer join review as r on r.item_id = i.id
+group by i.id , i.name
+having avg_star < (select avg(star) from review)
+order by avg_star desc;
+
+#--select 문 안에 서브쿼리
+select 
+id,name,price, (select max(price) from item) as max_price 
+from item;
+
+#--where 절 안에 서브쿼리
+--> 평균 가격 보다 큰 상품 찾기 
+select id,name,price,(select avg(price) from item) as avg_star
+from item
+where price > (select avg(price) from item);
+
+-->최저가 상품의 이름, id,가격 찾기
+select id,name,price
+from item
+where price  = (select min(price) from item);
+
+-->평점 갯수가 3개 이상인 상품 정보 출력
+select *
+from item
+where id in 
+(
+select item_id from review group by item_id having count(*) > 3 
+);
+
+#--any(some) 은 return 한 서브쿼리의 row들 중 적어도 하나만 만족하면 됨
+-->age> any(서브쿼리) 는 서브쿼리의 return 값들 중 적어도 최솟값보다 큰거를 찾는다
+select * from member 
+where age > any(select age from member where height > 20);
+
+-->all 은 return 한 서브쿼리의 row들 모두를 만족
+select * from member
+where view_count > all(select view_count from codeit_theater
+where category ='ACTION') and category!= 'ACTION';
+
+-->가장 많은 회원들이 살고 있는 지역의 회원들만 조회
+select * from member 
+where substring(address,1,2) = 
+(
+select substring(address,1,2) from member group by substring(address,1,2)
+order by count(*) desc
+limit 1
+);
+
+저는 코팡에서 2020년을 기준으로 생각했을 때, 꽤 오래 전에 등록되었지만 
+아직까지도 리뷰가 달리고 있는 스테디 셀러 상품들의 리뷰들을 살펴보려고 하는데요. 
+review 테이블에서
+'2018년 12월 31일' 이전에 코팡 사이트에 등록된 상품들에 관한 리뷰들만 추려보겠습니다.
+그리고 이때 review 테이블의 모든 컬럼들을 조회하세요.
+*조인 말고 서브쿼리를 사용해서 문제를 해결해보세요.
+select * from review 
+where item_id in (
+select id from item where registration_date < '2018-12-31'
+)
+
+#--from 절에 있는 서브 쿼리
+# derived table 이라 하며 서브 쿼리로 생성된 테이블이다. -> 컬럼 2개 이상
+
+select avg(review_count),max(review_count),min(review_count)
+from
+(select substring(address,1,2) as region,
+    count(*) as review_count 
+    from review as r left outer join member as m 
+    on r.mem_id = m.id 
+    group by substring(address,1,2)
+    having region is not null
+    and region != '안드')as review_count_summary;
+
+
+#---서브 쿼리 ---
+단일 값을 리턴하는 서브쿼리 -> where = , > 
+하나의 column에 여러 row들이 있는 형태의 결과를 리턴하는 서브 쿼리
+:where in,any,some,all
+하나의 테이블 형태의 결과를 리턴하는 서브 쿼리: 원래 테이블처럼 사용 + alias 붙여줘야됨 
+
+#---비상관 서브쿼리 :서브 쿼리가 그것을 둘러싼 outer query와 별개로 독립적으로 실행
+상관 서브 쿼리: 서브쿼리랑 outer query가 상관관계가 있음
+-->item 테이블 중에서 id 컬럼 값이 review 테이블의 item_id 컬럼에 존재하는 row 들만 조회해라
+
+select * from item
+where exists (select * from review where review.item_id = item.id)
+
+#같은 테이블인데 m1,m2로 나눠서 같다고 표시하는거는 같은 컬럼을 찾는것 
+->같은 년도 에 태어난 애들 중 제일 작은 키를 기존의 select 문에 추가하겠다.
+select *,
+(select min(height)
+from member as m2 where birthday is not null and height is not null and
+year(m1.birthday) = year(m2.birthday)) as min_height_in_the_year
+from member as m1 
+order by min_height_in_the_year asc;
+
+

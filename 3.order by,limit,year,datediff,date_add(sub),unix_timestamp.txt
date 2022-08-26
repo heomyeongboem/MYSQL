@@ -1,0 +1,102 @@
+# use copang_main; 하면 
+#copang_main.member 라고 안써도 됨 
+use copang_main;
+select * from member;
+
+#이메일이 taehos@hanmail.net인 거 찾기
+select * from member where email = 'taehos@hanmail.net'
+
+#age 중 30~39를 제외하고 출력 
+select * from member age not between 30 and 39;
+
+#2019-01-01이후부터 
+select * from member where sign_up_day > '2019-01-01';
+
+#sign_up_day가 2018-01-01' 부터 '2018-12-31' 까지 
+select * from memeber where sign_up_day between  '2018-01-01' and '2018-12-31';
+
+#주소가 서울로 시작 -> like '%'는 뒤에 임의의 갯수의 텍스트가 옴
+select * from member where address like '서울%';
+
+#주소에 고양시가 들어감 
+select * from member where address like '%고양시%';
+
+#성별이 m이 아닌것 -> != , <>
+select * from memeber where gender != 'm';
+select * from memeber where gender <> 'm';
+
+#age가 20,30만 고름 
+select * from member where age in (20,30);
+
+#c다음에 임의의 5글자가 들어오고 그다음에 @가 들어오는 값을 조회
+select * from member where email like 'c______@%' ;
+
+#년 -->year()
+select * from member where year(birthday) = '1992';
+
+#6,7,8월 --> month()
+select * from member where month(sign_up_day) in (6,7,8);
+
+#일 --> dayofmonth()
+select * from member where dayofmonth(sign_up_day) between 15 and 31;
+
+#2019-01-01로부터 며칠 차이가 나는지 -> datediff(a,b) --> a - b 
+select email,sign_up_day,datediff(sign_up_day,'2019-01-01') from member;
+
+#오늘 날짜를 기준으로 차이를 구함 --> curdate()
+select email,sign_up_day,curdate(),datdiff(sign_up_day,curdate())from member;
+select email,sign_up_day,datediff(curdate(),sign_up_day) from member;
+
+#몇살때 등록했는지 --> birthday로부터 등록날의 차이를 구한뒤 365로 나눔 
+select email,sign_up_day,birthday,datediff(sign_up_day,birthday)/365 from member;
+
+#가입일로부터 300일을 추가 --> date_add(a, interval b day)
+select sign_up_day,date_add(sign_up_day, interval 300 day) from member;
+
+#가입일로부터 250일 전 날짜를 추가 --> date_sub(a, interval b day)
+select sign_up_day, date_sub(sign_up_day, interval 250 day) from member;
+
+#unix 기준으로 몇초인지 측정해주는 함수 --> unix_timestamp(a)
+select sign_up_day,unix_time_stamp(sign_up_day) from member;
+
+#년 월 일 단위로 측정해줌 --> unixtime(a)
+select sign_up_day,from_unixtime(unix_timestamp(sign_up_day)) from member;
+
+#11 나이 20대, 가입 7월달 --> and 구문 쓸때 무조껀 괄호 !!! 
+select id,email,age,sign_up_day from member
+where (age between 20 and 29)
+and (month(sign_up_day) in 7); 
+
+#13 중첩 and
+#남자회원중 몸무게가 70이상인 회원들중 height column을 기준으로 오름차순 정렬됨
+select * from member
+where gender = 'm'
+and weight >= 70
+order by height asc;
+
+#두번 정렬 -> 먼저 나온게 먼저 정렬된다.
+#sign_up_day의 연도먼저 내림차순으로 정렬하고 그 중에 
+#같은 연도라면 이메일 기준으로 오름차순 정렬해준다. 
+select sign_up_day, email from member
+order by year(sign_up_day) desc,
+email asc;
+
+#16 정렬 -> 10명 추림 
+select * from member 
+order by sign_up_day asc
+limit 10;
+
+#정렬 -> 8번 인덱스의 row부터 2개 추림 (limit은 인덱스 기준으로 9번째 값부터 10번째 까지의 값을 넣겠다.)
+select * from memeber
+order by sign_up_day asc
+limit 8,2;
+
+#별점 오름차순 정렬, 같은 별점인 경우 
+#등록일자를 기준으로 내림차순 정렬
+#5번째 row 까지 추려서 출력 -> 4번 인덱스로 0번 ~ 4번 인덱스는 5개 정답
+#review 테이블 
+select * from review 
+order by star asc,
+registration_date desc
+limit 5;
+

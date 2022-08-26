@@ -1,0 +1,226 @@
+작성 순서: select from where group by having orderby limit 
+실행순서: FROM WHERE GROUP BY HAVING SELECT ORDER BY LIMIT
+-----------------------------------------------------
+#집계함수 : 전체 row 에 대해 동시에 고려하는 함수 --> 하나 컬럼, 하나 row만 나옴 --> 서브 쿼리이용해야된다.
+#MAX,MIN,AVG
+SELECT MAX(weight) FROM member;
+----------------------------------------------------
+#산술 함수: 특정 컬럼의 각 row 들에 대해 각각 실행됨 
+#ABS:절댓값, SQRT, CEIL:올림, FLOOR, ROUND
+select ceil (age) from member;
+
+#평균 구하고 반올림 구하기 -> 괄호 먼저 
+SELECT ( ROUND ( AVG )(price))
+FROM menu;
+----------------------------------------------------
+#address 에 null 이 있는 거,없는거  찾기
+select * from where address is null;
+select * from where address is not null;
+
+#height,weight,address에서 null이 하나라도 있는거 찾기
+select * from member
+where height is null,
+or weight is null,
+or address is null;
+
+#값이 null이라면 해당 문자로 바꿔줌 
+select 
+coalesce(height, '####')
+coalesce(weight,'####')
+coalesce(address,'####')
+from memeber
+
+#이상한 값 제외해서 평균 구하기 -> 9살이상 100명 이하 
+select avg(age) from member where age between 5 and 100;
+
+#정상인 주소 찾기 -> 호로 끝남
+select * from member where address like '%호'
+
+#리뷰가 있는 것의 갯수, 리뷰평점의 평균을 반올림 
+select count(*),
+        round(avg(star))
+from review where comment is not null;
+
+#컬럼끼리 계산(bmi) --> 제곱 연산은 안된다 !! ** 
+select email,height,weight,weight/(height/100) *(height/100) from member;
+
+#컬럼 이름 변환 --> as 
+select 
+email,
+height as 키,
+weight as 몸무게,
+weight /(height/100) * (height/100) as BMI 
+from member;
+
+#여러 이름의 컬럼을 하나의 컬럼으로 변환 --> concat(변수 , '상수',변수, '상수')
+select 
+email,
+concat(height, 'cm', ',' ,weight, 'kg') as '키와 몸무게',
+weight/(height/100) * (height/100) as BMI
+from member;
+
+#한글은 '한글' , 영어는 영어 이렇게 적는다. 
+#경우로 나눔 --> 
+(case  
+when 조건1 then '출력1',
+when 조건2 then '출력2',
+else '출력3' 
+end) as 원하는 변수명  
+
+##bmi 지수 검사 
+#select 문 안에서는 모두 변수로 취급하기 때문에 case 앞에도 , (comma) 를 넣어줘야된다. 
+select email,concat(height,'cm' , ' , ' , weight, ' kg ') as '키와 몸무게',
+weight/((height/100) * (height/100)) as BMI,
+(case
+	when weight is null or height is null then '비만 여부 알 수 없음'
+	when weight/((height/100) * (height/100)) >= 25 then '과체중 또는 비만 '
+	when weight/((height/100) * (height/100))>=18.5 
+		and weight/((height/100) * (height/100)) < 25
+		then '정상'
+	else '저체중'
+end) as obesity_check 
+
+from member order by obesity_check asc;
+
+#단순 case 함수
+case 컬럼이름 
+when 값 then 값
+when 값 then 값
+when 값 then 값
+else 값
+end 
+
+select email,
+case age
+	when 29 then '스물아홉살'
+	when 30 then '서른살'
+	else age
+end 
+from member;
+
+---NULL 값을 다른 값으로 변환---
+---coalesce,ifnull,if,case---
+#coalesce(a, b * alpha, '값')
+#height에 null이 있다면 weight * 2.3으로 바꿔라 
+select coalesce (height, weight * 2.3, 'N/A') from member;
+
+#ifnull(컬럼,'값')  + as '값' 도 된다. 
+#height에 null이 있다면 'N/A'로 바꿔라
+select ifnull(height, 'N/A') 
+from member;
+
+#if(조건 , 값1,  값2)
+#height 가 null이 아니라면 height를 거짓이라면 'N/A'를 출력
+select if(height is not null, height, 'N/A') 
+from member;
+
+#case 조건 만족하면 height, 아니라면 'N/A' 출력 
+select
+case
+	when height is not null then height
+	else 'N/A'
+end 
+from memeber;
+
+
+select 
+category, 
+main_month,
+count(*) as '영화 수',
+sum(view_count) as '총 관객 수'
+FROM 2020_movie_report 
+order by category, main_month
+having main_month = 5 
+and sum(view_count) >= 3000000;
+
+# 세부 그룹을 다시 묶어서 보기 
+select substring(address ,1 ,2) as region,
+    gender,
+    count(*)
+from member
+group by substring(address, 1,2) , gender with rollup
+having region is not null
+order by region,gender desc;
+
+select year(sign_up_day)as s_year, gender, substring(address,1,2) as region,
+grouping(sign_up_day) , grouping(gender), grouping(substring(address,1,2)),
+count(*)
+from member
+group by year(sign_up_day), gender, substring(address,1,2) with roll up
+order by s_year desc;
+
+#---distinct() : column에서 서로 다른 고유값만 을 조회---
+#성별의 고유값 조회
+select distinct(gender) from member;
+#주소의 고유값 조회 
+select distinct(substring(address,1,2))
+from member where address is not null;
+
+#---count(distinct()) : 고유값 갯수 구하기
+#성별의 고유값 갯수 조회
+select count(distinct(gender)) from member;
+#주소의 고유값 갯수 조회 
+select count(distinct(substring(address,1,2))) from member where address is not null;
+
+#---length() :문자열의 길이
+select *, length(address) as len from member;
+
+#---upper() :기존의 문자열을 대문자로 변환 
+select email,upper(email) from member;
+
+#---lower() :기존의 문자열을 소문자로 변환
+select email,lower(email) from member;
+
+#---rpad, lpad(column,갯수,'문자') :문자열의 갯수를 지정및 padding(남은 자리는 채워줌)
+select email,lpad(age,10,'0') from member;
+select email,rpad(age,10,'#') from member;
+
+#ltrim,rtrim,trim() :공백 삭제(왼,오른,양쪽)
+SELECT ltrim(word) FROM trim;
+select rtrim(word) from trim;
+select trim(word) from trim;
+
+#---group by() : 그루핑
+-> select문에서 집계함수인 count(*),avg(height),min(weight) 등 그룹의 집계계산 가능 
+select gender, count(*), avg(height), min(weight) from member group by gender;
+
+->여러 컬럼을 기준으로 그루핑 
+->그루핑 한 컬럼들만 볼 수 있음 + 집계함수 
+select substring(address,1,2)as region,gender,count(*) from member 
+group by region,gender
+having region is not null
+order by region asc,gender desc;
+
+###실습문제### 
+이 테이블의 row들을
+category 컬럼, main_month 컬럼을 기준으로 그루핑하고
+그룹들 중에서 주 상영 월이 5월이고, view_count의 합이 3000000(삼백만) 이상인 것들만 선별하세요.
+그리고 category 컬럼, main_month 컬럼, 각 그룹에 속한 row의 개수, 각 그룹의 view_count 합, 이 4가지 컬럼을 조회하세요.
+마지막으로 각 그룹에 속한 row의 개수 컬럼에는 '영화 수'라는 alias를, 각 그룹의 view_count 합 컬럼에는 총 관객 수라는 alias를 붙이세요.
+
+select category, main_month ,count(*) as '영화 수',sum(view_count )as '총 관객 수'
+from 2020_movie_report 
+group by category, main_month
+having main_month = 5 and sum(view_count) >= 3000000
+
+#---with rollup() :세부그룹들을 큰 단위의 그룹으로 합쳐줘서 계산해준다.
+SELECT SUBSTRING(address, 1, 2) as region,
+       gender,
+       COUNT(*)
+FROM member
+GROUP BY SUBSTRING(address, 1, 2), gender WITH ROLLUP
+HAVING region IS NOT NULL
+ORDER BY region ASC, gender DESC;
+---> 이렇게 하면 전체 갯수는 모른다. ->having region is not null을 뺀다.
+그런데 이렇게 하면 기존에 있던 null인지 부분총계를 위한 null인지 모름 
+
+#---grouping() -> 원래 null은 0을 , 부분총계를 나타내기 위해 표시된 null은 1 을 반환
+select substring(address ,1 ,2) as region,
+    gender,
+    count(*),
+    grouping(substring(address ,1 ,2)),
+    grouping(gender)
+    
+from member
+group by substring(address, 1,2) , gender with rollup
+order by region,gender desc;
