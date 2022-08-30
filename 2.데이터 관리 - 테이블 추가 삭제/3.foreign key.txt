@@ -1,0 +1,60 @@
+---현재 테이블의 상태를 만드는 법을 보여주는 구문--- 
+1)show 
+#show create table 테이블;
+show create table review; 
+
+---foreign key를 이용한 제약사항---
+1)on delete는 부모테이블 삭제시
+restrict : foreign key에 의해 참조되고 있는 부모테이블의 row는 삭제 불가
+cascade :부모 테이블의 row를 삭제할때 그 row를 참조하고 있는 자식의 row들도 모두 삭제
+set null  :부모 테이블의 row 삭제시 해당키를 참조하고 있는 자식 테이블의 row들의 foreign key컬럼에 해당하는 값이 null 이 된다.
+
+2)on update는 부모테이블 업데이트시
+restrict : foreign key에 의해 참조되고 있는 부모테이블의 컬럼값은 업데이트 불가 
+cascade :부모 테이블의 컬럼값을 업데이트 할 때 그 row를 참조하고 있는 자식의 row들도 모두 알맞게 업데이트 
+set null  :부모 테이블의 컬럼값을 업데이트 할 때 해당 row를 참조하고 있는 자식 테이블의 row들에 대한 foreign key컬럼값이 null 이 된다.
+
+ALTER TABLE 테이블 
+add constraint 포렌키 
+foreign key 자식테이블(참조하는 키) 
+references 부모테이블(참조 당하는 키)
+on delete restricit <--- 1
+on update restricit; <--- 2
+
+---foreign key 삭제---
+#alter table 테이블 drop foreign key 포렌키룰;
+alter table review drop foreign key fk_review_table;
+
+---스키마 정의---
+개념적 스키마:
+‘데이터베이스 설계사항’정도로 생각
+각 테이블의 컬럼 구조와 각 컬럼의 데이터 타입 및 속성이 어떻게 되고, 
+테이블 간의 관계는 어떻게 되는지 등과 같은,
+
+물리적 스키마:
+'sql 회사에서 만드는 구조'정도로 생각 , 우리가 할께 아님 
+만약 member 라는 테이블이 있고 그 안에 id, name, age 등의 컬럼이 있을 때 
+각 컬럼의 값들을 어떤 방식으로 저장할지에 관한 설계사항이죠.     
+
+---실습과제---
+지금 delivery 테이블의 order_id 컬럼을, customer_order 테이블의 id 컬럼을 참조하는 물리적 Foreign Key로 설정하려고 합니다.
+SQL 문을 써서 직접 Foreign Key를 설정해보세요. 이때 Foreign Key의 이름은 fk_delivery_order로 지으시고, 
+부모 테이블의 row가 삭제되거나, Foreign Key에 의해 참조당하는 컬럼의 값이 갱신될 때에 관한 정책은 
+ON DELETE의 경우 그 row를 참조하던 자식 테이블의 row들의 컬럼에 NULL이 들어가도록 설정하고,
+ON UPDATE의 경우 그 row를 참조하던 자식 테이블의 row들의 컬럼도 같은 값으로 갱신되도록 설정하세요.
+
+alter table delivery 
+add constraint fk_delivery_order
+foreign key delivery(order_id)
+references  customer_order(id)
+on delete set null
+on update cascade;
+
+
+
+
+
+
+
+
+

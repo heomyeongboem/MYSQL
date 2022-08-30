@@ -1,0 +1,161 @@
+요약:
+alter table 테이블 함수 ~
+
+---컬럼 수정---
+1)컬럼 추가
+#alter table 테이블 add 컬럼 데이터타입 데이터속성;
+alter table student add gender char(1) null;
+
+2)컬럼 이름 변경
+#alter table 테이블 rename column 컬럼(변경전) to 컬럼(변경후);
+alter table student rename column student_number to registration_number;
+
+3)컬럼 삭제
+#alter table 테이블 drop column 컬럼;
+alter table student drop column admission_date;
+
+4)컬럼 속성변경 :문자열이었다면 
+먼저 update 테이블 set 컬럼 = 값 where 조건을 통해 정수형으로 바꿔줘야한다. 
+그 후에
+#alter table 테이블 modify 컬럼 데이터타입(변경후)
+alter table student modify major int;
+
+5)실습과제 - 컬럼 구조 변경 
+a 작업 : name 컬럼의 이름을 model로 수정
+b 작업 : size 컬럼의 데이터 타입을 INT에서 DOUBLE로 수정
+c 작업 : brand 컬럼을 삭제 
+d 작업 : stock 컬럼(데이터 타입이 INT이고, NOT NULL 속성을 가진 컬럼) 추가
+
+alter table shoes 
+rename column name to model,
+modify size int double,
+drop column brand,
+add stock int not null;
+
+6)컬럼에 default 값 설정
+#값을 넣어주지 않으면 default 값대로 넣어짐  
+alter table student modify major int not null default '101';
+
+7)현재 시간 
+7)-1 now : 컬럼 값에 now()함수를 넣게 되면 현재 시간이 들어감 
+insert into post(title,content,upload_time,recent_modified_time)
+values("별로",'where i go?',now(),now());
+upload_time -> 현재시간 
+recent_modified_time -> 현재시간 
+
+7)-2 default current_timestamp : 속성에 default current_timestamp 를 넣어주면 
+컬럼값에 now를 넣어주지 않아도 알아서 현재시간이 들어감
+alter table post modify upload_time default current_timestamp
+alter table post modify recent_modified_time default current_timestamp
+insert into post(title,content)
+values('오랜만에 등산을 했습니다!', '여름이 되고, 등산을 하고픈 마음에..');
+--> now를 적지 않았는데도 upload_time  과 recent_modified_time 에 현재 시간이 들어감 
+
+7)-3 on update current_timestamp :속성에 추가로 on update current_timestamp 를 넣어주면
+업데이트시 알아서 현재시간이 들어감 
+alter table post modify recent_modified_time default current_time_stamp on update current_timestamp;
+update post 
+	set content = '등산 장비를 사고나니 이제 슬슬 등산이 하고 싶어서...' 
+	where id = 2;
+--> recent_modified_time를 업데이트 해주지 않았는데도 업데이트시 시간이 들어감 
+
+8)unique : 컬럼에 고유값 값을 주기 
+#중복되는 값이 있다면 에러가 뜸  
+alter table student modify registration_number int not null unique;
+
+
+9)Primary Key는 NULL을 가질 수 없지만, Unique는 NULL을 허용한다
+
+---컬럼에 제약 사항 추가---
+제약 사항이 있으면 위반시 error가 뜬다. 
+1)add constraint : 제약 사항 추가
+#alter table 테이블 add constraint 룰 check(조건);
+alter table student
+add constraint st_rule check(registration_number > 30000000);
+
+2)drop constraint : 제약사항 삭제 
+#alter table 테이블 drop constraint 조건;
+alter table student drop constraint st_rule;
+
+3) 제약 사항 여러개 추가 
+#alter table 테이블 add constraint 룰 check(조건1 and 조건2) 
+alter table student add constraint st_rule check(email like '%@%' and gender in ('m','f'));
+
+---컬럼 순서 바꾸기---
+1)first : 컬럼 제일 앞으로 
+#alter table 테이블 modify ~ first;
+alter table player_info
+modify id int not null auto_increment first;
+
+2)after  : 컬럼 간의 순서 바꾸기 
+#alter table 테이블 modify ~ after 앞에올컬럼;
+alter table player_info
+modify role char(5) null after name;
+
+3)change 컬럼의 이름과 데이터 타입 및 속성 동시에 수정하기 
+#alter table 테이블 변경전컬럼 변경후컬럼 변경후데이터타입 및 속성;
+alter table player_info change role position varchar(2) not null;
+
+4)여러 작업 동시에 수행하기 
+alter table 뒤에는 컬럼에 관한 작업을 여러개두는 것이 가능
+a. id 컬럼의 이름을 registraion_number로 수정
+b. name 컬럼의 데이터 타입을 VARCHAR(20)로, 속성을 NOT NULL로 수정
+c. position 컬럼을 테이블에서 삭제
+d. 새로운 컬럼 2개(height(키), weight(몸무게)) 추가
+
+alter table player_info
+rename id to registraion_number,
+modify name varchar(20) not null,
+drop column position,
+add height double not null,
+add weight double not null;
+
+5)실습과제
+book 테이블에 관해서 다음과 같은 작업을 수행하세요. 
+a. isbn 컬럼에 NOT NULL 속성과 UNIQUE 속성 주기
+b. page 컬럼에 0보다 큰 값이 들어와야 한다는 제약사항 설정하기(제약 사항 이름은 page_rule 이라고 짓기)
+c. kind 컬럼의 이름을 genre_code로 바꾸면서, 동시에 그 데이터 타입을 INT로 설정하기
+d. location 컬럼에 기본값으로 ‘warehouse’ 라는 값을 설정하기
+작업 내용에 없는 기존 속성은 그대로 유지한 채 작업을 수행해주세요.
+
+alter table book
+modify isbn varchar(50) not null unique,
+add constraint page_rule check(page > 0),
+change kind genre_code int not null,
+modify location varchar(10) not null default 'warehouse';
+
+---테이블 복사,삭제
+1)테이블 복사
+#create table 테이블 as select * from 테이블(복사할);
+create table copy_of_undergraduate as select * from undergraduate;
+
+2)테이블 삭제
+#drop table 테이블;
+drop table copy_of_undergraduate;
+
+3)컬럼만 복사
+#create table 테이블 like 테이블(복사할);
+create table copy_of_undergraduate like undergraduate;
+
+4)다른 테이블의 row들 가져오기
+#insert into 테이블 select * from 가져올 테이블;
+insert into copy_of_undergraduate select * from undergraduate;
+
+5)다른 테이블의 특정 row만 가져오기 
+insert into 테이블 select * from 가져올테이블 where 조건;
+insert into copy_of_undergraduate
+select * from undergraduate where major = 101;
+
+6)컬럼구조는 냅두고 row만 전부 삭제
+truncate 테이블;
+
+7)실습과제
+이 중에서 특히 20세 이상 30세 미만의 회원들이 남긴 리뷰들만 따로 beta_review_20s라는 이름의 테이블로 저장해두려고 합니다.
+이 테이블의 컬럼 구조와 똑같은 구조를 가진 테이블을 새로 만들고
+거기에 20대가 남긴 리뷰만 넣으면 될 것 같네요. SQL 문으로 직접 이 작업을 수행해보세요.
+
+create table beta_review_20s like beta_review 
+insert into beta_review_20s select * from beta_review where age between 20 and 29;
+
+
+

@@ -10,9 +10,10 @@ select i.id,i.name,s.item_id,s.inventory_count
 from item as i right outer join stock as s 
 on i.id = s.item_id;
 
-#foreign key란 한쪽은 무조껀 다른 한쪽이 가지고 있는 값을 포함해야된다.
--->A가 B에 포함되는 관계
-inner join은 포함관계가 아니여도 성립 
+---foreign key---
+primary key를 참조하는 key 
+item 테이블의 id(primary key)를 stock 테이블의 item_id가 참조할때 item_id를 foreign key라고 부른다. 
+그래서 부모 테이블의 primary key를 참조하는 자식 테이블의 컬럼을 foreign key라고 부른다.
 
 #---실습
 pizza_price_cost, sales  두 테이블을 조인해서, 각 피자별 판매량을 한꺼번에 보려고 합니다.
@@ -23,8 +24,8 @@ select p.name, colaesce (s.sales_volume, '판매량 정보 없음') as '판매�
 from pizza_price_cost as p left outer join sales as s
 on p.id = s.menu_id;
 
-#---결합 연산: left outer join , right outer join , inner join
-#---집합 연산: 합집합, 차집합, 교집합 (필요조건) 두 컬럼이름이 동일
+#---결합 연산: left outer join , right outer join , inner join -> 가로로 추가 
+#---집합 연산: 합집합, 차집합, 교집합 (필요조건) 두 컬럼이름이 동일 -> 세로로 추가 
 #A교집합B
 select * from A
 intersect 
@@ -32,7 +33,7 @@ select * from B;
 
 #A-B
 select * form A
-intersect
+minus
 select * from B;
 
 #A합집합B

@@ -87,7 +87,7 @@ order by sign_up_day asc
 limit 10;
 
 #정렬 -> 8번 인덱스의 row부터 2개 추림 (limit은 인덱스 기준으로 9번째 값부터 10번째 까지의 값을 넣겠다.)
-select * from memeber
+select * from member 
 order by sign_up_day asc
 limit 8,2;
 

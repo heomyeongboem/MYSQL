@@ -98,4 +98,107 @@ year(m1.birthday) = year(m2.birthday)) as min_height_in_the_year
 from member as m1 
 order by min_height_in_the_year asc;
 
+#실습과제
+이때 리뷰가 있는 상품들의 가격 중에서
+최대 가격
+리뷰의 평균 별점
+리뷰를 남긴 고유한 회원 이메일의 수
+를 구하려고 하는데요.
+일단은
+이 세 테이블을 모두 이너 조인(inner join)하고, 거기서 price, star, email 컬럼만 조회하세요.
+그 SELECT 문을 derived table로 활용해보세요.
+그리고 derived table에는 copang_report(코팡 보고서)라는 alias를 붙여주세요.
+조회하는 컬럼은 다음과 같은 3가지 컬럼일 텐데요. 각 컬럼에 아래와 같은 alias를 붙여주세요.
+MAX(copang_report.price) → max_price
+AVG(copang_report.star) → avg_star
+COUNT(DISTINCT(copang_report.email)) → distinct_email_count
+
+select 
+max(price)as 'max_price' , 
+avg(star) as 'avg_star', 
+count(*) as 'distinct_email_count' 
+from(select price, star, email from item as i inner join review as r on r.item_id = i.id 
+inner join member as m on r.mem_id = m.id) as copang_report ; 
+
+---서브쿼리 VS 조인---
+1)서브쿼리: item테이블에 있는 id에 대해서 stock의 inventory_count를 가져옴--- 
+select id, name,(select inventory_count from stock where stock.item_id = item.id) 
+from item;
+
+2)조인: item테이블에 있는 id에 대해서 stock의 inventory_count를 가져옴--- 
+select i.id, i.name, s.inventory_count
+from item as i left outer join stock as s 
+on s.item_id = i.id;
+
+3)서브쿼리안에 as 를 이용한 바깥에 case문 
+select email,bmi,
+(case 
+    when weight is null or height is null then '비만 여부 알 수 없음'
+    when BMI >= 25 then '과제충 또는 비만'
+    when BMI >= 18.5 and BMI < 25 then '정상'
+    else  '저체중'
+end)as obesity_check 
+from
+(select *,weight/((height/100) * (height/100)) as bmi from member)as subquery_for_BMI
+order by obesity_check asc;
+
+---뷰 : 조인, 서브쿼리 등의 작업을 해서 만든 '결과 테이블' 이 가상으로 저장된 형태---
+#create view 테이블명 as 서브쿼리;
+아이템 id와 name으로 그룹 지었을때 아이템의 평균평점의 최고값이면서
+평점의 갯수가 제일 많은 아이템 찾기 
+
+1)뷰 테이블 만들기 
+create view three_tables_joined as 
+select i.id ,i.name, avg(star) as avg_star, count(*) as count_star 
+from item as i left outer join review as r on r.item_id = i.id 
+left outer join member as m on r.mem_id = m.id 
+where m.gender = 'f'
+group by i.id, i.name
+having count(*) >= 2
+order by avg(star) desc , count(*) desc;
+
+2)뷰 테이블 사용하기 
+select * from three_tables_joined
+where avg_star = (
+select max(avg_star) from three_tables_joined
+)
+and count_star = (
+select max(count_star) from three_tables_joined
+)
+
+3) 장점:
+사용자에게 높은 편의성을 제공한다. -> 한 쿼리창안에서 여러 서브 쿼리를 작성하지 않아도 되므로
++ 똑같은 문을 여러번 작성하지 않아도 되므로
+각자에게 적합한 구조로 데이터들을 준비해둘 수 있다.
+
+보안
+ex)부서가 secret인 애들은 보여주지 않는 뷰를 만든다.
+create view emp_view2 as 
+select id,
+name,
+age,
+department 
+from employee
+where department != 'secret';
+
+---회사 내의 데이터베이스 파악---
+1)show databases :존재하는 데이터 베이스 파악
+2)show full tables in 데이터베이스 :데이터베이스안에 뷰와 테이블 파악 
+3)describe 테이블 :테이블의 컬럼 구조 파악 
+4)foreign key 파악:
+select 
+i.table_schema, i.table_name,i.constraint_type,i.constraint_name,
+k.referenced_table_name,k.referenced_column_name
+
+from information_schema.table_constraints i
+left join information_schema.key_column_usage k on i.constraint_name = k.constraint_name
+where i.constraint_type = 'FOREIGN KEY';
+
+
+
+
+
+
+
+
 

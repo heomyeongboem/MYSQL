@@ -1,5 +1,5 @@
-작성 순서: select from where group by having orderby limit 
-실행순서: FROM WHERE GROUP BY HAVING SELECT ORDER BY LIMIT
+작성 순서: select  -> from -> where -> group by -> having -> orderby -> limit 
+실행순서: FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT
 -----------------------------------------------------
 #집계함수 : 전체 row 에 대해 동시에 고려하는 함수 --> 하나 컬럼, 하나 row만 나옴 --> 서브 쿼리이용해야된다.
 #MAX,MIN,AVG
@@ -172,8 +172,8 @@ select email,upper(email) from member;
 select email,lower(email) from member;
 
 #---rpad, lpad(column,갯수,'문자') :문자열의 갯수를 지정및 padding(남은 자리는 채워줌)
-select email,lpad(age,10,'0') from member;
-select email,rpad(age,10,'#') from member;
+select email,lpad(age,10,'0') from member; 왼쪽을 0으로 채운다. 
+select email,rpad(age,10,'#') from member; 오른쪽을 #으로 채운다. 
 
 #ltrim,rtrim,trim() :공백 삭제(왼,오른,양쪽)
 SELECT ltrim(word) FROM trim;
